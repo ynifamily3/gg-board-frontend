@@ -11,6 +11,8 @@ import { Fragment, Suspense, useMemo, useRef, useState } from "react";
 import dayjs from "dayjs";
 import MyModal from "../Modal";
 import { S3_URL } from "../const";
+import classNames from "classnames";
+import { ReplyWriteForm } from "./ReplyWriteForm";
 
 export function DeletePasswordForm({
   handleClose,
@@ -171,18 +173,24 @@ function ArticleItem({ id }: { id: number }) {
         <ul>
           {replyData?.map((reply) => (
             <li
-              className="flex even:bg-gray-100 p-4"
+              className={classNames(
+                "flex even:bg-gray-100 p-4",
+                reply.parentTrueFalse === false && "pl-5" // 답글인 경우 들여쓰기
+              )}
               key={reply.replyId + "-" + reply.parentId}
             >
+              {reply.parentTrueFalse === false && (
+                <span aria-label="답글">↳</span>
+              )}
               <span>{reply.nickname}:&nbsp;</span>
               <span className="flex-1">{reply.content}</span>
               <button
                 onClick={async () => {
                   const result = window.prompt(
-                    `${reply.content.slice(
+                    `댓글 [${reply.content.slice(
                       0,
                       30
-                    )}...\n삭제하려면 비밀번호 입력: `
+                    )}...]을/를 \n삭제하려면 비밀번호 입력: `
                   );
                   if (result === null) return;
                   deleteReplyMutation
@@ -207,36 +215,34 @@ function ArticleItem({ id }: { id: number }) {
           ))}
         </ul>
         <hr className="my-4" />
-        <div>댓글 입력</div>
-        <div className="flex space-x-2">
-          <input
-            type="text"
-            className="border"
-            placeholder="닉네임"
-            defaultValue="ㅇㅇ"
-            ref={nicknameInputRef}
-          />
-          <input
-            type="password"
-            className="border"
-            placeholder="패스워드"
-            defaultValue="dd"
-            ref={passwordInputRef}
-          />
-        </div>
-        <div className="mt-2 flex space-x-2 items-center mb-10">
-          <input
-            type="text"
-            className="flex-1 border p-4"
-            ref={contentInputRef}
-          />
-          <button
-            onClick={() => handleRegisterReply()}
-            className="p-4 border bg-gray-100"
-          >
-            등록
-          </button>
-        </div>
+        <ReplyWriteForm
+          NicknameInput={
+            <input
+              type="text"
+              className="border"
+              placeholder="닉네임"
+              defaultValue="ㅇㅇ"
+              ref={nicknameInputRef}
+            />
+          }
+          PasswordInput={
+            <input
+              type="password"
+              className="border"
+              placeholder="패스워드"
+              defaultValue="dd"
+              ref={passwordInputRef}
+            />
+          }
+          ContentInput={
+            <input
+              type="text"
+              className="flex-1 border p-4"
+              ref={contentInputRef}
+            />
+          }
+          handleRegisterReply={handleRegisterReply}
+        />
       </div>
       <MyModal
         isOpen={deleteConfirm}
