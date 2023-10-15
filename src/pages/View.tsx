@@ -216,6 +216,7 @@ function ArticleItem({ id }: { id: number }) {
         </ul>
         <hr className="my-4" />
         <ReplyWriteForm
+          title="댓글 입력"
           NicknameInput={
             <input
               type="text"

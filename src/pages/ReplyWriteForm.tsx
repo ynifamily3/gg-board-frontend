@@ -4,13 +4,19 @@ export const ReplyWriteForm = (props: {
   NicknameInput: ReactNode;
   PasswordInput: ReactNode;
   ContentInput: ReactNode;
+  title: string;
   handleRegisterReply: () => void;
 }) => {
-  const { NicknameInput, PasswordInput, ContentInput, handleRegisterReply } =
-    props;
+  const {
+    NicknameInput,
+    PasswordInput,
+    ContentInput,
+    handleRegisterReply,
+    title,
+  } = props;
   return (
     <div className="">
-      <div>댓글 입력</div>
+      <div>{title}</div>
       <div className="flex space-x-2">
         {NicknameInput}
         {PasswordInput}
