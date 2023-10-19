@@ -1,6 +1,7 @@
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
+  Reply,
   deleteArticle,
   deleteReply,
   getReplyList,
@@ -111,6 +112,11 @@ function ArticleItem({ id }: { id: number }) {
   const nicknameInputRef = useRef<HTMLInputElement>(null);
   const passwordInputRef = useRef<HTMLInputElement>(null);
   const contentInputRef = useRef<HTMLInputElement>(null);
+
+  const nicknameReInputRef = useRef<HTMLInputElement>(null);
+  const passwordReInputRef = useRef<HTMLInputElement>(null);
+  const contentReInputRef = useRef<HTMLInputElement>(null);
+
   const writeReplyMutation = useMutation(["writeReply"], postReply);
   const deleteReplyMutation = useMutation(["deleteReply"], deleteReply);
 
@@ -131,6 +137,27 @@ function ArticleItem({ id }: { id: number }) {
         alert("댓글 달기 오류!!");
       });
   };
+
+  const handleRegisterReReply = (parentId: Reply["replyId"]) => {
+    const data = {
+      parentId,
+      content: (contentReInputRef.current?.value ?? "").trim(),
+      nickname: (nicknameReInputRef.current?.value ?? "").trim(),
+      password: passwordReInputRef.current?.value ?? "",
+      postId: id,
+    };
+    writeReplyMutation
+      .mutateAsync(data)
+      .then(() => {
+        setReplying(null);
+        replyRefetch();
+      })
+      .catch(() => {
+        alert("답글 달기 오류!!");
+      });
+  };
+
+  const [replying, setReplying] = useState<Reply["replyId"] | null>(null);
 
   return (
     <div className="p-3">
@@ -174,43 +201,103 @@ function ArticleItem({ id }: { id: number }) {
           {replyData?.map((reply) => (
             <li
               className={classNames(
-                "flex even:bg-gray-100 p-4",
+                "flex flex-col even:bg-gray-100 p-4",
                 reply.parentTrueFalse === false && "pl-5" // 답글인 경우 들여쓰기
               )}
               key={reply.replyId + "-" + reply.parentId}
             >
-              {reply.parentTrueFalse === false && (
-                <span aria-label="답글">↳</span>
+              <div className="flex-1 flex">
+                {reply.parentTrueFalse === false && (
+                  <span aria-label="답글">↳</span>
+                )}
+                <span>{reply.nickname}:&nbsp;</span>
+                <span
+                  className={classNames(
+                    "flex-1",
+                    reply.content === null && "italic text-gray-500"
+                  )}
+                >
+                  {reply.content === null
+                    ? "삭제된 댓글입니다."
+                    : reply.content}
+                </span>
+                {reply.content !== null && (
+                  <button
+                    onClick={async () => {
+                      const result = window.prompt(
+                        `댓글 [${reply.content.slice(
+                          0,
+                          30
+                        )}...]을/를 \n삭제하려면 비밀번호 입력: `
+                      );
+                      if (result === null) return;
+                      deleteReplyMutation
+                        .mutateAsync({
+                          parentId: reply.parentId,
+                          password: result,
+                          postId: reply.postId,
+                          replyId: reply.replyId,
+                        })
+                        .then(() => {
+                          replyRefetch();
+                        })
+                        .catch(() =>
+                          alert("삭제실패! 비밀번호를 확인해주세요.")
+                        );
+                    }}
+                    title="삭제"
+                    className="px-3 hover:bg-blue-50 "
+                  >
+                    &times;
+                  </button>
+                )}
+                {reply.parentTrueFalse && reply.content !== null && (
+                  <button
+                    className="px-3 hover:bg-blue-50"
+                    onClick={() => {
+                      setReplying((r) => (r ? null : reply.replyId));
+                    }}
+                  >
+                    답글 작성
+                  </button>
+                )}
+                <pre>{dayjs(reply.updateDate).format("MM/DD HH:mm")}</pre>
+              </div>
+              {replying === reply.replyId && (
+                <div className="mt-3 p-3 bg-white border">
+                  <ReplyWriteForm
+                    title="답글 입력"
+                    NicknameInput={
+                      <input
+                        type="text"
+                        className="border"
+                        placeholder="닉네임"
+                        defaultValue="ㅇㅇ"
+                        ref={nicknameReInputRef}
+                      />
+                    }
+                    PasswordInput={
+                      <input
+                        type="password"
+                        className="border"
+                        placeholder="패스워드"
+                        defaultValue="dd"
+                        ref={passwordReInputRef}
+                      />
+                    }
+                    ContentInput={
+                      <input
+                        type="text"
+                        className="flex-1 border p-4"
+                        ref={contentReInputRef}
+                      />
+                    }
+                    handleRegisterReply={() =>
+                      handleRegisterReReply(reply.replyId)
+                    }
+                  />
+                </div>
               )}
-              <span>{reply.nickname}:&nbsp;</span>
-              <span className="flex-1">{reply.content}</span>
-              <button
-                onClick={async () => {
-                  const result = window.prompt(
-                    `댓글 [${reply.content.slice(
-                      0,
-                      30
-                    )}...]을/를 \n삭제하려면 비밀번호 입력: `
-                  );
-                  if (result === null) return;
-                  deleteReplyMutation
-                    .mutateAsync({
-                      parentId: reply.parentId,
-                      password: result,
-                      postId: reply.postId,
-                      replyId: reply.replyId,
-                    })
-                    .then(() => {
-                      replyRefetch();
-                    })
-                    .catch(() => alert("삭제실패! 비밀번호를 확인해주세요."));
-                }}
-                title="삭제"
-                className="px-3 hover:bg-blue-50 "
-              >
-                &times;
-              </button>
-              <pre>{dayjs(reply.updateDate).format("MM/DD HH:mm")}</pre>
             </li>
           ))}
         </ul>
