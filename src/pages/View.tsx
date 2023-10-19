@@ -255,7 +255,9 @@ function ArticleItem({ id }: { id: number }) {
                   <button
                     className="px-3 hover:bg-blue-50"
                     onClick={() => {
-                      setReplying((r) => (r ? null : reply.replyId));
+                      setReplying((r) =>
+                        r === reply.replyId ? null : reply.replyId
+                      );
                     }}
                   >
                     답글 작성
